@@ -141,6 +141,43 @@ async def health_check():
     }
 
 
+@app.get("/api/debug/users")
+async def debug_users():
+    """Debug endpoint to check users.json"""
+    from auth import get_users
+    import json
+    from pathlib import Path
+
+    users_file = Path(__file__).parent / "users.json"
+
+    try:
+        # Check if file exists
+        if not users_file.exists():
+            return {"error": "users.json not found", "path": str(users_file)}
+
+        # Read raw content
+        with open(users_file, 'r') as f:
+            raw_content = f.read()
+
+        # Try to parse
+        try:
+            users = get_users()
+            return {
+                "status": "ok",
+                "users_count": len(users),
+                "usernames": list(users.keys()),
+                "raw_content_preview": raw_content[:200]
+            }
+        except Exception as e:
+            return {
+                "error": "Failed to parse users",
+                "exception": str(e),
+                "raw_content": raw_content
+            }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # ============================================
 # Authentication Endpoints
 # ============================================
@@ -151,18 +188,30 @@ async def login(login_data: LoginRequest):
     Authenticate user and return JWT token
     Default credentials: admin / admin123
     """
-    user = authenticate_user(login_data.username, login_data.password)
+    try:
+        user = authenticate_user(login_data.username, login_data.password)
 
-    if not user:
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect username or password"
+            )
+
+        # Create access token
+        access_token = create_access_token(data={"sub": user["username"]})
+
+        return TokenResponse(access_token=access_token)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[!] Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
-            status_code=401,
-            detail="Incorrect username or password"
+            status_code=500,
+            detail=f"Login failed: {str(e)}"
         )
-
-    # Create access token
-    access_token = create_access_token(data={"sub": user["username"]})
-
-    return TokenResponse(access_token=access_token)
 
 
 @app.post("/api/auth/logout")
