@@ -1,17 +1,30 @@
 # 🎯 Qdrant Dashboard
 
-Modern, şifreli ve tema destekli Qdrant Vector Database yönetim paneli.
+Modern, multi-tenant Qdrant Vector Database yönetim paneli. JWT authentication, customer management ve production-ready deployment özellikleri ile.
+
+## 🌐 Live Demo
+
+**Production URL**: https://qdrantdashboard.turklawai.com
+**Login**: admin / admin123
 
 ## ✨ Özellikler
 
-- 🔐 **Şifre Korumalı**: MD5 hash ile güvenli giriş sistemi
-- 🌙 **Gece/Gündüz Modu**: Kullanıcı tercihine göre tema değiştirme
+### Core Features
+- 🔐 **JWT Authentication**: Güvenli token-based authentication
+- 👥 **Multi-Tenant Support**: Customer bazlı quota ve collection yönetimi
 - 📊 **Dashboard**: Collection, vektör sayısı ve sistem durumu istatistikleri
 - 📦 **Collection Yönetimi**: Collection listesi, oluşturma ve silme
 - 💚 **Sistem Durumu**: Qdrant cluster ve health bilgileri
-- 📋 **Log Takibi**: Tüm işlemlerin gerçek zamanlı log kaydı
-- ⚙️ **Ayarlar**: Otomatik yenileme ve şifre değiştirme
-- 🔄 **Otomatik Güncelleme**: Belirlenen aralıklarla otomatik veri güncelleme
+- 📋 **Real-time Stats**: Customer usage, quota tracking
+- ⚙️ **Admin Panel**: User management, customer operations
+- 🔄 **Auto-Deploy**: GitHub push → Production deployment
+
+### Advanced Features (06.10.2025)
+- 🔧 **Admin Sync Endpoint**: Remote `customers.json` update without shell access
+- 🛡️ **Auto Backup**: Automatic backup before data sync
+- 🔄 **Error Rollback**: Automatic rollback on sync failure
+- 📜 **PowerShell/Bash Scripts**: Automated sync workflows
+- 🌙 **Theme Support**: Dark/Light mode (preserved from v1.0)
 
 ## 🚀 Kurulum
 
@@ -49,27 +62,43 @@ uvicorn app:app --host 0.0.0.0 --port 8080 --reload
 
 Dashboard `http://localhost:8080` adresinde çalışacaktır.
 
-## 🔑 Varsayılan Şifre
+## 🔑 Varsayılan Credentials
 
-İlk girişte varsayılan şifre: **`password`**
+**Username**: admin
+**Password**: admin123
 
-Giriş yaptıktan sonra **Ayarlar** bölümünden şifrenizi değiştirebilirsiniz.
+⚠️ **Production'da şifrenizi mutlaka değiştirin!**
 
 ## 📁 Proje Yapısı
 
 ```
 qdrant-dashboard/
-├── app.py                      # FastAPI backend
-├── requirements.txt            # Python bağımlılıkları
-├── .env.example               # Örnek çevre değişkenleri
-├── README.md                  # Bu dosya
+├── app.py                          # FastAPI backend + Admin sync endpoint
+├── auth.py                         # JWT authentication
+├── customer_manager.py             # Customer operations
+├── embedding_service.py            # Embedding service
+├── requirements.txt                # Python dependencies
+├── .env.example                    # Environment variables template
+├── customers.json                  # Customer database (gitignored)
+├── users.json                      # User database (gitignored)
+├── Dockerfile                      # Production container
+├── docker-compose.yml              # Docker compose config
+├── README.md                       # This file
+├── TODO.md                         # Task tracking
+├── SUCCESS_SUMMARY.md              # Latest success report
+├── PRODUCTION_SYNC_GUIDE.md        # Sync guide
+├── NEXT_STEPS.md                   # Roadmap
+├── sync_customers_script.ps1       # PowerShell sync automation
+├── sync_customers_script.sh        # Bash sync automation
+├── reset_admin_password.py         # Password reset utility
 ├── templates/
-│   └── index.html             # Ana dashboard HTML
-├── static/
-│   ├── css/
-│   │   └── dashboard.css      # Stil dosyası (tema desteği)
-│   └── js/
-│       └── dashboard.js       # JavaScript (auth, tema, API)
+│   └── index.html                 # Dashboard UI
+└── static/
+    ├── css/
+    │   └── dashboard.css          # Styling
+    └── js/
+        ├── dashboard.js           # Main logic + auth
+        └── customers.js           # Customer management
 ```
 
 ## 🎨 Tema Sistemi
@@ -100,25 +129,66 @@ Tema değiştirme sol menüdeki "Tema Değiştir" butonundan yapılır.
 
 ## 📊 API Endpoints
 
-### Dashboard API
+### Authentication API
 
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| `GET` | `/` | Ana dashboard sayfası |
-| `GET` | `/api/health` | API sağlık kontrolü |
+| Method | Endpoint | Açıklama | Auth |
+|--------|----------|----------|------|
+| `POST` | `/api/auth/login` | JWT token al | - |
+| `POST` | `/api/auth/logout` | Logout | JWT |
+| `POST` | `/api/auth/change-password` | Şifre değiştir | JWT |
+| `GET` | `/api/auth/me` | Kullanıcı bilgisi | JWT |
+
+### Customer Management API
+
+| Method | Endpoint | Açıklama | Auth |
+|--------|----------|----------|------|
+| `GET` | `/api/customers` | Customer listesi | JWT |
+| `GET` | `/api/customers/stats` | Customer istatistikleri | JWT |
+| `GET` | `/api/customers/{id}` | Customer detayı | JWT |
+| `POST` | `/api/customers` | Yeni customer | JWT |
+| `PUT` | `/api/customers/{id}` | Customer güncelle | JWT |
+| `DELETE` | `/api/customers/{id}` | Customer sil | JWT |
+| `POST` | `/api/customers/{id}/upload` | File upload | JWT |
+| `GET` | `/api/customers/{id}/documents` | Document listesi | JWT |
+
+### Admin API (New! 06.10.2025)
+
+| Method | Endpoint | Açıklama | Auth |
+|--------|----------|----------|------|
+| `POST` | `/api/admin/sync-customers` | customers.json sync | Admin JWT |
+
+**Sync Endpoint Özellikleri**:
+- ✅ Admin-only (role: admin)
+- ✅ Automatic backup (`customers.json.backup`)
+- ✅ Data validation
+- ✅ Error rollback
+- ✅ Returns customer count
+
+**Usage**:
+```bash
+# Login
+TOKEN=$(curl -X POST https://qdrantdashboard.turklawai.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}' | jq -r '.access_token')
+
+# Sync customers
+curl -X POST https://qdrantdashboard.turklawai.com/api/admin/sync-customers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d @customers.json
+```
 
 ### Qdrant Proxy API
 
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| `GET` | `/api/qdrant/status` | Qdrant durumu |
-| `GET` | `/api/qdrant/collections` | Tüm collection'lar |
-| `GET` | `/api/qdrant/collections/{name}` | Collection detayı |
-| `POST` | `/api/qdrant/collections/{name}` | Collection oluştur |
-| `DELETE` | `/api/qdrant/collections/{name}` | Collection sil |
-| `GET` | `/api/qdrant/cluster` | Cluster bilgisi |
-| `GET` | `/api/qdrant/telemetry` | Telemetri verileri |
-| `POST` | `/api/qdrant/collections/{name}/points/search` | Vektör arama |
+| Method | Endpoint | Açıklama | Auth |
+|--------|----------|----------|------|
+| `GET` | `/api/qdrant/status` | Qdrant durumu | - |
+| `GET` | `/api/qdrant/collections` | Tüm collection'lar | - |
+| `GET` | `/api/qdrant/collections/{name}` | Collection detayı | - |
+| `POST` | `/api/qdrant/collections/{name}` | Collection oluştur | JWT |
+| `DELETE` | `/api/qdrant/collections/{name}` | Collection sil | JWT |
+| `GET` | `/api/qdrant/cluster` | Cluster bilgisi | - |
+| `GET` | `/api/qdrant/telemetry` | Telemetri verileri | - |
 
 ## 🐳 Docker Deployment
 
@@ -146,32 +216,41 @@ docker run -p 8080:8080 \
   qdrant-dashboard
 ```
 
-## 🚀 Coolify Deployment
+## 🚀 Production Deployment
 
-### Coolify'da Deploy
+### Render.com (Current Production)
+
+**Live URL**: https://qdrantdashboard.turklawai.com
+
+**Auto-Deploy Setup**:
+1. Fork/Import GitHub repo
+2. Create new Web Service
+3. Set environment variables:
+   - `QDRANT_URL=https://qdrant.turklawai.com`
+   - `QDRANT_API_KEY=<your_key>`
+   - `PORT=8081`
+4. Deploy → Automatic SSL + Custom domain
+
+**Sync customers.json** (no shell access needed):
+```powershell
+# Windows
+.\sync_customers_script.ps1
+
+# Linux/Mac
+./sync_customers_script.sh
+```
+
+### Coolify Deployment (Alternative)
 
 1. **New Resource** → **Docker Compose**
-2. **Repository**: Bu projeyi bağla
-3. **Environment Variables** ekle:
+2. **Repository**: Connect this project
+3. **Environment Variables**:
    - `QDRANT_URL=https://qdrant.turklawai.com`
-   - `PORT=8080`
-4. **Deploy** butonuna tıkla
+   - `QDRANT_API_KEY=<your_key>`
+   - `PORT=8081`
+4. **Deploy** → Auto SSL with Let's Encrypt
 
-### Docker Compose (Coolify)
-
-```yaml
-version: '3.8'
-
-services:
-  dashboard:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - QDRANT_URL=https://qdrant.turklawai.com
-      - QDRANT_API_KEY=${QDRANT_API_KEY}
-    restart: unless-stopped
-```
+See `COOLIFY_DEPLOYMENT.md` for detailed instructions.
 
 ## 📝 Özelleştirme
 
@@ -220,6 +299,32 @@ uvicorn app:app --host 0.0.0.0 --port 8080 --reload
 PYTHONDONTWRITEBYTECODE=1 python app.py
 ```
 
+## 📚 Documentation
+
+- **README.md** - This file (main documentation)
+- **TODO.md** - Task tracking and completed features
+- **SUCCESS_SUMMARY.md** - Latest success report (Volkan customer fix)
+- **PRODUCTION_SYNC_GUIDE.md** - Production sync instructions
+- **UPDATE_PRODUCTION.md** - Problem analysis and solutions
+- **NEXT_STEPS.md** - Roadmap and future features
+- **COOLIFY_DEPLOYMENT.md** - Coolify deployment guide
+
+## 🎯 Recent Updates (06.10.2025)
+
+### ✅ Volkan Customer Fix - COMPLETED
+- **Problem**: Customer not visible on dashboard
+- **Root Cause**: Production `customers.json` out of sync
+- **Solution**: Admin API endpoint for remote sync
+- **Status**: ✅ SOLVED - Both customers now visible (Volkan + Qdrant Customer)
+
+### 🆕 New Features
+- **Admin Sync Endpoint**: `POST /api/admin/sync-customers`
+- **Automation Scripts**: PowerShell/Bash sync automation
+- **Auto Backup**: Backup before every sync
+- **Error Recovery**: Automatic rollback on failure
+
+See `SUCCESS_SUMMARY.md` for complete details.
+
 ## 📄 Lisans
 
 Bu proje TurkLawAI projesi kapsamında geliştirilmiştir.
@@ -234,8 +339,10 @@ Bu proje TurkLawAI projesi kapsamında geliştirilmiştir.
 
 ## 📧 İletişim
 
-Sorularınız için: [GitHub Issues](https://github.com/yourusername/qdrant-dashboard/issues)
+- **GitHub**: https://github.com/botfusions/qdrantdashboard
+- **Issues**: https://github.com/botfusions/qdrantdashboard/issues
+- **Production**: https://qdrantdashboard.turklawai.com
 
 ---
 
-**TurkLawAI** | Qdrant Dashboard v1.0.0
+**TurkLawAI** | Qdrant Dashboard v2.0.0 (06.10.2025)

@@ -61,6 +61,40 @@
 - ✅ **Password Changed**: admin / Ce848005/1
 - ✅ **Auto-Deploy**: GitHub push → Render deploy
 
+### Collection Naming System Update (06.10.2025) ✅
+- ✅ **Collection Rename**: customer_2122beac → qdrant_customer_embedding (134 vectors)
+- ✅ **New Naming Convention**: `{customer_name}_document` format
+  - Örnek: "volkan" müşteri → "volkan_document" collection
+- ✅ **Backend Update**: customer_manager.py yeni naming kullanıyor
+- ✅ **Frontend Update**:
+  - Collection name live preview eklendi
+  - Müşteri adı yazarken otomatik `{ad}_document` gösterimi
+- ✅ **Utility Scripts**:
+  - rename_collection.py (collection rename için)
+  - create_qdrant_customer.py (qdrant_customer_embedding için customer kaydı)
+
+### Volkan Customer Fix (06.10.2025) ✅ TAMAMLANDI
+- ✅ **Sorun Tespit**: Volkan müşterisi dashboard'da görünmüyordu
+  - Qdrant'ta `customer_2122beac` collection'ı mevcut (134 vektör)
+  - Production `customers.json` dosyası güncel değildi
+- ✅ **Çözüm: Admin Sync Endpoint Eklendi**
+  - Yeni endpoint: `POST /api/admin/sync-customers`
+  - Admin-only (JWT authentication)
+  - Otomatik backup + rollback
+  - PowerShell ve Bash sync script'leri
+- ✅ **Production Sync Tamamlandı**
+  - `customers.json` güncellendi
+  - 2 customer aktif: Volkan (134 docs) + Qdrant Customer (134 docs)
+  - Dashboard'da her iki müşteri de görünüyor
+- ✅ **Dokümantasyon**
+  - SUCCESS_SUMMARY.md - Başarı özeti
+  - PRODUCTION_SYNC_GUIDE.md - Detaylı sync rehberi
+  - UPDATE_PRODUCTION.md - Sorun analizi
+  - NEXT_STEPS.md - Gelecek adımlar
+  - sync_customers_script.ps1 - PowerShell sync
+  - sync_customers_script.sh - Bash sync
+  - reset_admin_password.py - Admin şifre reset
+
 ---
 
 ## 📋 Yapılacaklar
@@ -111,28 +145,48 @@
 
 ```
 qdrant-dashboard/
-├── app.py                      # FastAPI backend
-├── auth.py                     # JWT authentication module
-├── users.json                  # User database
-├── customers.json              # Customer database
-├── customer_manager.py         # Customer operations
-├── embedding_service.py        # Embedding generation
-├── estimate_usage.py           # Usage calculation script
-├── requirements.txt            # Python dependencies
-├── .env                        # Environment config (PORT=8081)
-├── Dockerfile                  # 🆕 Production container image
-├── docker-compose.yml          # 🆕 Docker compose configuration
-├── .dockerignore               # 🆕 Docker build exclusions
-├── COOLIFY_DEPLOYMENT.md       # 🆕 Coolify deployment rehberi
+├── app.py                          # FastAPI backend (admin sync endpoint added)
+├── auth.py                         # JWT authentication module
+├── users.json                      # User database (admin/admin123)
+├── customers.json                  # Customer database (2 customers)
+├── customers.json.example          # Example customer data
+├── customer_manager.py             # Customer operations
+├── embedding_service.py            # Embedding generation
+├── estimate_usage.py               # Usage calculation script
+├── requirements.txt                # Python dependencies
+├── .env                            # Environment config (PORT=8081)
+├── .env.example                    # Example environment variables
+├── Dockerfile                      # Production container image
+├── Dockerfile.railway              # Railway deployment config
+├── Dockerfile.render               # Render deployment config
+├── docker-compose.yml              # Docker compose configuration
+├── .dockerignore                   # Docker build exclusions
+├── railway.json                    # Railway platform config
+├── render.yaml                     # Render platform config
+├── init.sh                         # Initialization script
+├── COOLIFY_DEPLOYMENT.md           # Coolify deployment guide
+├── DEPLOYMENT_CREDENTIALS.md       # Deployment credentials
+├── README.md                       # Main documentation
+├── TODO.md                         # This file - task tracking
+├── SUCCESS_SUMMARY.md              # 🆕 Volkan fix success report
+├── PRODUCTION_SYNC_GUIDE.md        # 🆕 Sync guide for production
+├── UPDATE_PRODUCTION.md            # 🆕 Problem analysis
+├── NEXT_STEPS.md                   # 🆕 Roadmap and next actions
+├── sync_customers_script.ps1       # 🆕 PowerShell sync script
+├── sync_customers_script.sh        # 🆕 Bash sync script
+├── reset_admin_password.py         # 🆕 Admin password reset
+├── rename_collection.py            # Collection rename utility
+├── create_qdrant_customer.py       # Customer creation script
+├── create_customer_2122beac.py     # Specific customer script
 ├── templates/
-│   └── index.html             # Dashboard UI
+│   └── index.html                 # Dashboard UI
 └── static/
     ├── css/
-    │   └── dashboard.css
+    │   └── dashboard.css          # Styling
     └── js/
-        ├── dashboard.js       # Main dashboard logic + auth
-        ├── customers.js       # Customer management
-        └── mock-data.js       # Mock data (disabled)
+        ├── dashboard.js           # Main dashboard logic + auth
+        ├── customers.js           # Customer management
+        └── mock-data.js           # Mock data (disabled)
 ```
 
 ---
@@ -201,29 +255,52 @@ curl http://localhost:8081/api/auth/me \
 
 ---
 
-## 🆕 Son Değişiklikler (05.10.2025)
+## 🆕 Son Değişiklikler (06.10.2025)
 
-### Coolify Deployment Hazırlığı
-- ✅ **Dockerfile** oluşturuldu (Python 3.11-slim, multi-stage build)
-- ✅ **docker-compose.yml** oluşturuldu (port 8081, volumes, health checks)
-- ✅ **.dockerignore** oluşturuldu (gereksiz dosyalar hariç tutuldu)
-- ✅ **COOLIFY_DEPLOYMENT.md** rehberi hazırlandı
-  - Adım adım deployment talimatları
-  - Environment variables listesi
-  - DNS ayarları (Cloudflare)
-  - Domain: `qdrantdashboard.turklawai.com`
-  - HTTPS/SSL (Let's Encrypt)
-  - Troubleshooting rehberi
-  - Security best practices
+### Volkan Customer Fix - Production Sync Solution
+- ✅ **Problem**: Volkan customer missing from dashboard
+- ✅ **Root Cause**: Production `customers.json` out of sync
+- ✅ **Solution**: Admin API endpoint for remote sync
+  - No shell access needed (Render.com free tier limitation)
+  - Automatic backup before sync
+  - Error rollback on failure
+  - PowerShell/Bash automation scripts
+
+### Admin Sync Endpoint (`POST /api/admin/sync-customers`)
+- ✅ Admin-only authentication (JWT required)
+- ✅ Validates data structure before sync
+- ✅ Creates backup: `/app/customers.json.backup`
+- ✅ Rollback on error
+- ✅ Returns sync status with customer count
+
+### Automation Scripts
+- ✅ **sync_customers_script.ps1** - Windows PowerShell
+- ✅ **sync_customers_script.sh** - Linux/Mac Bash
+- ✅ **reset_admin_password.py** - Admin password reset utility
+
+### Production Status
+- ✅ **Dashboard**: https://qdrantdashboard.turklawai.com
+- ✅ **Customers**: 2 active (Volkan + Qdrant Customer)
+- ✅ **Collections**: customer_2122beac (134) + qdrant_customer_embedding (134)
+- ✅ **Login**: admin / admin123
+- ✅ **Health**: Healthy and operational
+
+### Documentation Added
+- ✅ SUCCESS_SUMMARY.md - Complete success report
+- ✅ PRODUCTION_SYNC_GUIDE.md - Detailed sync instructions
+- ✅ UPDATE_PRODUCTION.md - Problem analysis
+- ✅ NEXT_STEPS.md - Roadmap and future features
 
 ### Deployment Detayları
 - **Port**: 8081
 - **Domain**: https://qdrantdashboard.turklawai.com
 - **Container**: Python 3.11-slim + FastAPI + uvicorn
-- **Volumes**: users.json, customers.json, data/
+- **Platform**: Render.com (free tier)
+- **Volumes**: users.json, customers.json (persistent)
 - **Health Check**: `/api/health` endpoint
-- **SSL**: Let's Encrypt otomatik sertifika
+- **SSL**: Let's Encrypt (automatic)
+- **Auto-Deploy**: GitHub push → Render deploy
 
 ---
 
-**Son Güncelleme**: 05.10.2025 - Coolify deployment dosyaları eklendi! 🚀
+**Son Güncelleme**: 06.10.2025 23:30 - Volkan customer fix tamamlandı! ✅
