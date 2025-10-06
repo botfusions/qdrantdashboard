@@ -647,6 +647,56 @@ async def get_customer_documents(customer_id: str):
         }
 
 
+# Admin-only endpoints
+@app.post("/api/admin/sync-customers")
+async def sync_customers_from_data(
+    customers_data: dict,
+    current_user: dict = Depends(get_current_admin_user)
+):
+    """
+    Admin-only: Sync customers.json file with provided data
+    This allows updating production customers.json without shell access
+    """
+    try:
+        # Validate data structure
+        if "customers" not in customers_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid data format. Expected: {\"customers\": [...]}"
+            )
+
+        # Backup existing file
+        backup_file = Path(customer_manager.customers_file.parent / "customers.json.backup")
+        if customer_manager.customers_file.exists():
+            import shutil
+            shutil.copy(customer_manager.customers_file, backup_file)
+
+        # Write new data
+        customer_manager._save_data(customers_data)
+
+        # Verify by loading
+        loaded_customers = customer_manager.get_all_customers()
+
+        return {
+            "success": True,
+            "message": "Customers data synced successfully",
+            "backup_created": str(backup_file),
+            "customers_count": len(loaded_customers),
+            "customers": [c.to_dict() for c in loaded_customers]
+        }
+
+    except Exception as e:
+        # Restore from backup if exists
+        if backup_file.exists():
+            import shutil
+            shutil.copy(backup_file, customer_manager.customers_file)
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to sync customers: {str(e)}"
+        )
+
+
 if __name__ == "__main__":
     import uvicorn
     print(f"[*] Qdrant Dashboard starting on http://0.0.0.0:{PORT}")
