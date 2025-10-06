@@ -81,8 +81,39 @@ def get_users() -> dict:
         save_users(default_users)
         return default_users
 
-    with open(USERS_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            users_data = json.load(f)
+
+        # Handle old list format - convert to dict
+        if isinstance(users_data, list):
+            users_dict = {}
+            for user in users_data:
+                username = user.get("username")
+                if username:
+                    users_dict[username] = {
+                        "username": username,
+                        "hashed_password": user.get("password_hash", ""),
+                        "role": user.get("role", "user"),
+                        "created_at": datetime.utcnow().isoformat()
+                    }
+            # Save in new format
+            save_users(users_dict)
+            return users_dict
+
+        return users_data
+    except (json.JSONDecodeError, FileNotFoundError):
+        # If file is corrupted, recreate default user
+        default_users = {
+            "admin": {
+                "username": "admin",
+                "hashed_password": get_password_hash("admin123"),
+                "role": "admin",
+                "created_at": datetime.utcnow().isoformat()
+            }
+        }
+        save_users(default_users)
+        return default_users
 
 
 def save_users(users: dict):
