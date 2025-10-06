@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: qdrant-dashboard
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: QDRANT_URL
+        value: https://qdrant.turklawai.com
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
+    disk:
+      name: qdrant-data
+      mountPath: /app/data
+      sizeGB: 1
