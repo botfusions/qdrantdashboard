@@ -50,20 +50,22 @@
 
 ---
 
+### Production Deployment - Render.com (06.10.2025) ✅
+- ✅ **GitHub Repository**: https://github.com/botfusions/qdrantdashboard
+- ✅ **Render.com Deployment**: Free tier
+- ✅ **Custom Domain**: https://qdrantdashboard.turklawai.com
+- ✅ **DNS**: Netlify DNS (CNAME)
+- ✅ **SSL**: Let's Encrypt (otomatik)
+- ✅ **Environment Variables**: Configured
+- ✅ **Login Fix**: bcrypt direct implementation
+- ✅ **Password Changed**: admin / Ce848005/1
+- ✅ **Auto-Deploy**: GitHub push → Render deploy
+
+---
+
 ## 📋 Yapılacaklar
 
-### 1. Coolify Deployment (Yüksek Öncelik) 🚀
-- [ ] Git repository'ye push et (GitHub/GitLab)
-- [ ] Coolify'da yeni application oluştur
-- [ ] Environment variables ekle (QDRANT_URL, QDRANT_API_KEY, SECRET_KEY)
-- [ ] Domain ekle: `qdrantdashboard.turklawai.com`
-- [ ] DNS ayarları yap (Cloudflare A record)
-- [ ] HTTPS aktif et (Let's Encrypt)
-- [ ] Deploy et ve test et
-- [ ] İlk giriş yap ve admin şifresini değiştir
-- [ ] Persistent volumes ayarla (users.json, customers.json)
-
-### 2. Google Drive Entegrasyonu
+### 1. Google Drive Entegrasyonu
 - [ ] Google Drive OAuth2 credential oluştur
 - [ ] Google Drive Download node ekle
 - [ ] Unstructured API entegrasyonu ekle
