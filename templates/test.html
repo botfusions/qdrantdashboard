@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+    <script>
+        function testLogin() {
+            const password = document.getElementById('pwd').value;
+            const hash = CryptoJS.MD5(password).toString();
+            document.getElementById('result').textContent = 'Hash: ' + hash;
+
+            if (hash === '5f4dcc3b5aa765d61d8327deb882cf99') {
+                document.getElementById('result').textContent += ' - CORRECT!';
+                document.getElementById('result').style.color = 'green';
+            } else {
+                document.getElementById('result').textContent += ' - WRONG!';
+                document.getElementById('result').style.color = 'red';
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Test Login</h1>
+    <input type="password" id="pwd" placeholder="Enter password">
+    <button onclick="testLogin()">Test</button>
+    <p id="result"></p>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

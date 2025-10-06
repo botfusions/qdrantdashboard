@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qdrant Dashboard - TurkLawAI</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=20251001-5">
+</head>
+<body class="light-theme">
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <h2>🔐 Qdrant Dashboard</h2>
+            <p>Lütfen giriş yapın</p>
+            <form id="login-form">
+                <input type="text" id="username-input" placeholder="Kullanıcı adı" value="admin" required>
+                <input type="password" id="password-input" placeholder="Şifre giriniz" required>
+                <button type="submit">Giriş Yap</button>
+                <p id="login-error" class="error-message"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="site-wrap">
+
+        <!-- Sidebar Navigation -->
+        <nav class="site-nav">
+            <div class="name">
+                TurkLawAI
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6Z"></path>
+                </svg>
+            </div>
+
+            <ul>
+                <li class="active">
+                    <a href="#dashboard" data-page="dashboard">📊 Dashboard</a>
+                </li>
+                <li>
+                    <a href="#customers" data-page="customers">👥 Müşteriler</a>
+                </li>
+                <li>
+                    <a href="#collections" data-page="collections">📦 Collections</a>
+                </li>
+                <li>
+                    <a href="#status" data-page="status">💚 Sistem Durumu</a>
+                </li>
+                <li>
+                    <a href="#logs" data-page="logs">📋 Loglar</a>
+                </li>
+                <li>
+                    <a href="#settings" data-page="settings">⚙️ Ayarlar</a>
+                </li>
+            </ul>
+
+            <div class="note">
+                <h3>Qdrant Vector DB</h3>
+                <p>VPS üzerinde Coolify ile çalışan Qdrant instance yönetim paneli.</p>
+                <div class="theme-toggle">
+                    <button id="theme-toggle-btn">
+                        <span id="theme-icon">🌙</span>
+                        <span id="theme-text">Gece Modu</span>
+                    </button>
+                </div>
+            </div>
+
+            <button id="logout-btn" class="logout-btn">🚪 Çıkış Yap</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <header>
+                <div class="breadcrumbs">
+                    <a href="#dashboard">Ana Sayfa</a> / <span id="current-page">Dashboard</span>
+                </div>
+
+                <h1 class="title" id="page-title">Qdrant Dashboard</h1>
+
+                <div class="header-actions">
+                    <div class="status-badge" id="qdrant-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Bağlanıyor...</span>
+                    </div>
+                    <button id="refresh-btn" class="action-btn">🔄 Yenile</button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div id="content-area" class="content-area">
+
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-content active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">📦</div>
+                            <div class="stat-info">
+                                <h3>Collection Sayısı</h3>
+                                <p class="stat-value" id="stat-collections">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📄</div>
+                            <div class="stat-info">
+                                <h3>Toplam Vektör</h3>
+                                <p class="stat-value" id="stat-vectors">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💾</div>
+                            <div class="stat-info">
+                                <h3>Bellek Kullanımı</h3>
+                                <p class="stat-value" id="stat-memory">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">⚡</div>
+                            <div class="stat-info">
+                                <h3>Sistem Durumu</h3>
+                                <p class="stat-value" id="stat-status">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-panel">
+                        <h2>🔗 Bağlantı Bilgileri</h2>
+                        <div class="info-row">
+                            <strong>Qdrant URL:</strong>
+                            <code id="qdrant-url">https://qdrant.turklawai.com</code>
+                        </div>
+                        <div class="info-row">
+                            <strong>Versiyon:</strong>
+                            <span id="qdrant-version">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customers Page -->
+                <div id="page-customers" class="page-content">
+                    <div class="customers-header">
+                        <div class="customers-stats">
+                            <div class="stat-mini">
+                                <strong id="total-customers-count">0</strong>
+                                <span>Toplam Müşteri</span>
+                            </div>
+                            <div class="stat-mini">
+                                <strong id="active-customers-count">0</strong>
+                                <span>Aktif Müşteri</span>
+                            </div>
+                            <div class="stat-mini">
+                                <strong id="total-documents-count">0</strong>
+                                <span>Toplam Belge</span>
+                            </div>
+                            <div class="stat-mini">
+                                <strong id="total-usage-mb">0 MB</strong>
+                                <span>Toplam Kullanım</span>
+                            </div>
+                        </div>
+                        <button id="create-customer-btn" class="action-btn">➕ Yeni Müşteri</button>
+                    </div>
+                    <div id="customers-list" class="customers-list">
+                        <p class="loading-text">Müşteriler yükleniyor...</p>
+                    </div>
+                </div>
+
+                <!-- Collections Page -->
+                <div id="page-collections" class="page-content">
+                    <div class="collections-header">
+                        <button id="create-collection-btn" class="action-btn">➕ Yeni Collection</button>
+                    </div>
+                    <div id="collections-list" class="collections-list">
+                        <p class="loading-text">Collection'lar yükleniyor...</p>
+                    </div>
+                </div>
+
+                <!-- Status Page -->
+                <div id="page-status" class="page-content">
+                    <div class="status-panel">
+                        <h2>💚 Sistem Sağlık Durumu</h2>
+                        <div id="health-info" class="health-info">
+                            <p class="loading-text">Sistem bilgileri yükleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Page -->
+                <div id="page-logs" class="page-content">
+                    <div class="logs-panel">
+                        <h2>📋 Son İşlemler</h2>
+                        <div id="logs-container" class="logs-container">
+                            <p class="log-entry">Dashboard başlatıldı...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="page-settings" class="page-content">
+                    <div class="settings-panel">
+                        <h2>⚙️ Ayarlar</h2>
+                        <form id="settings-form">
+                            <div class="form-group">
+                                <label for="qdrant-endpoint">Qdrant Endpoint URL</label>
+                                <input type="url" id="qdrant-endpoint" value="https://qdrant.turklawai.com" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="auto-refresh">Otomatik Yenileme (saniye)</label>
+                                <input type="number" id="auto-refresh" value="30" min="10" max="300">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="notifications-enabled" checked>
+                                    Bildirimler Etkin
+                                </label>
+                            </div>
+                            <button type="button" id="change-password-btn" class="action-btn">🔑 Şifre Değiştir</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Create Customer Modal -->
+    <div id="create-customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Yeni Müşteri Ekle</h2>
+                <button class="close-modal" onclick="closeCreateCustomerModal()">&times;</button>
+            </div>
+            <form id="create-customer-form">
+                <div class="form-group">
+                    <label for="customer-name">Müşteri Adı *</label>
+                    <input type="text" id="customer-name" placeholder="Örnek: Ahmet Yılmaz" required>
+                </div>
+                <div class="form-group">
+                    <label for="customer-email">Email *</label>
+                    <input type="email" id="customer-email" placeholder="ornek@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="customer-quota">Kota (MB) *</label>
+                    <input type="number" id="customer-quota" value="100" min="10" max="10000" required>
+                    <small>Müşteriye tahsis edilecek depolama alanı</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateCustomerModal()">İptal</button>
+                    <button type="submit" class="btn-primary">Müşteri Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Document Modal -->
+    <div id="upload-document-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 Belge Yükle</h2>
+                <button class="close-modal" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <form id="upload-document-form">
+                <input type="hidden" id="upload-customer-id">
+                <div class="customer-info" id="upload-customer-info">
+                    <h3 id="upload-customer-name"></h3>
+                    <p>Kalan Kota: <strong id="upload-remaining-quota"></strong></p>
+                </div>
+                <div class="form-group">
+                    <label for="document-file">Dosya Seç *</label>
+                    <input type="file" id="document-file" accept=".pdf,.txt,.doc,.docx" required>
+                    <small>Desteklenen formatlar: PDF, TXT, DOC, DOCX</small>
+                </div>
+                <div class="form-group">
+                    <label for="document-description">Açıklama (Opsiyonel)</label>
+                    <textarea id="document-description" rows="3" placeholder="Belge hakkında not..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeUploadModal()">İptal</button>
+                    <button type="submit" class="btn-primary">Yükle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Google Drive Upload Modal -->
+    <div id="gdrive-upload-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 Google Drive'dan Dosya Yükle</h2>
+                <button class="close-modal" onclick="closeGDriveUploadModal()">&times;</button>
+            </div>
+            <form id="gdrive-upload-form">
+                <div class="form-group">
+                    <label for="gdrive-file-id">Google Drive File ID *</label>
+                    <input type="text" id="gdrive-file-id" placeholder="1abc...xyz" required>
+                    <small>URL formatı: https://drive.google.com/file/d/<strong>FILE_ID</strong>/view</small>
+                </div>
+                <div class="form-group">
+                    <label for="gdrive-file-name">Dosya Adı *</label>
+                    <input type="text" id="gdrive-file-name" placeholder="belge.pdf" required>
+                    <small>Desteklenen: .pdf, .txt, .docx, .doc</small>
+                </div>
+                <div class="form-group">
+                    <label for="gdrive-customer-id">Müşteri *</label>
+                    <select id="gdrive-customer-id" required>
+                        <option value="">Müşteri seçin...</option>
+                    </select>
+                </div>
+                <div id="upload-progress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p class="progress-text">Yükleniyor...</p>
+                </div>
+                <div id="upload-result" class="upload-result" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeGDriveUploadModal()">İptal</button>
+                    <button type="submit" class="btn-primary" id="gdrive-upload-btn">Yükle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Collection Modal -->
+    <div id="create-collection-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Yeni Collection Oluştur</h2>
+                <button class="close-modal" onclick="closeCreateCollectionModal()">&times;</button>
+            </div>
+            <form id="create-collection-form">
+                <div class="form-group">
+                    <label for="collection-name">Collection Adı *</label>
+                    <input type="text" id="collection-name" placeholder="ornek: legal_documents" required>
+                </div>
+                <div class="form-group">
+                    <label for="vector-size">Vektör Boyutu *</label>
+                    <input type="number" id="vector-size" value="1536" min="1" max="4096" required>
+                    <small>Yaygın değerler: 384, 768, 1536, 3072</small>
+                </div>
+                <div class="form-group">
+                    <label for="distance-metric">Mesafe Metriği *</label>
+                    <select id="distance-metric" required>
+                        <option value="Cosine">Cosine</option>
+                        <option value="Euclid">Euclid</option>
+                        <option value="Dot">Dot Product</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="on-disk-payload">
+                        On-Disk Payload (Büyük collection'lar için)
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateCollectionModal()">İptal</button>
+                    <button type="submit" class="btn-primary">Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/mock-data.js?v=20251001-5"></script>
+    <script src="/static/js/dashboard.js?v=20251001-5"></script>
+    <script src="/static/js/customers.js?v=20251001-5"></script>
+</body>
+</html>
