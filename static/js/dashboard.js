@@ -248,7 +248,18 @@ function updateStatusBadge(status, text) {
 function updateStats(telemetry) {
     if (telemetry) {
         // Update statistics from telemetry data
-        const totalVectors = telemetry.collections?.reduce((sum, col) => sum + (col.vectors_count || 0), 0) || 0;
+        let totalVectors = 0;
+
+        // Handle both array and object formats
+        if (telemetry.collections) {
+            if (Array.isArray(telemetry.collections)) {
+                totalVectors = telemetry.collections.reduce((sum, col) => sum + (col.vectors_count || 0), 0);
+            } else if (typeof telemetry.collections === 'object') {
+                // Object format: convert to array
+                totalVectors = Object.values(telemetry.collections).reduce((sum, col) => sum + (col.vectors_count || 0), 0);
+            }
+        }
+
         document.getElementById('stat-vectors').textContent = formatNumber(totalVectors);
 
         if (telemetry.app) {
