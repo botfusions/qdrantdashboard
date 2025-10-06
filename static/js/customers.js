@@ -335,4 +335,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (uploadForm) {
         uploadForm.addEventListener('submit', handleUploadDocument);
     }
+
+    // Collection name preview
+    const customerNameInput = document.getElementById('customer-name');
+    const collectionPreview = document.getElementById('collection-name-preview');
+    if (customerNameInput && collectionPreview) {
+        customerNameInput.addEventListener('input', (e) => {
+            const name = e.target.value.toLowerCase().trim().replace(/\s+/g, '_');
+            if (name) {
+                collectionPreview.textContent = `${name}_document`;
+                collectionPreview.style.color = '#2c3e50';
+            } else {
+                collectionPreview.textContent = '{ad}_document';
+                collectionPreview.style.color = '#666';
+            }
+        });
+    }
 });

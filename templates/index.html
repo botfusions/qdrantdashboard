@@ -233,7 +233,8 @@
             <form id="create-customer-form">
                 <div class="form-group">
                     <label for="customer-name">Müşteri Adı *</label>
-                    <input type="text" id="customer-name" placeholder="Örnek: Ahmet Yılmaz" required>
+                    <input type="text" id="customer-name" placeholder="Örnek: volkan" required>
+                    <small>Collection adı otomatik oluşturulacak: {ad}_document</small>
                 </div>
                 <div class="form-group">
                     <label for="customer-email">Email *</label>
@@ -243,6 +244,13 @@
                     <label for="customer-quota">Kota (MB) *</label>
                     <input type="number" id="customer-quota" value="100" min="10" max="10000" required>
                     <small>Müşteriye tahsis edilecek depolama alanı</small>
+                </div>
+                <div class="form-group">
+                    <label>Collection Adı (Otomatik)</label>
+                    <div id="collection-name-preview" style="padding: 8px; background: #f5f5f5; border-radius: 4px; font-family: monospace; color: #666;">
+                        {ad}_document
+                    </div>
+                    <small>Müşteri adı girildiğinde otomatik gösterilecek</small>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeCreateCustomerModal()">İptal</button>

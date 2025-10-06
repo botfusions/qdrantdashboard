@@ -31,7 +31,8 @@ class Customer:
         self.email = email
         self.quota_mb = quota_mb
         self.used_mb = used_mb
-        self.collection_name = collection_name or f"customer_{customer_id}"
+        # Collection naming: {customer_name}_document (e.g., volkan_document)
+        self.collection_name = collection_name or f"{name.lower().replace(' ', '_')}_document"
         self.created_at = created_at or datetime.utcnow().isoformat()
         self.active = active
         self.document_count = 0
