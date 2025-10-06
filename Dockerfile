@@ -21,12 +21,15 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p /app/data
 
-# Expose port
+# Make init script executable
+RUN chmod +x init.sh
+
+# Expose port (Railway will set PORT env variable)
 EXPOSE 8081
 
-# Health check
+# Health check (using PORT env variable)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8081/api/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8081}/api/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8081"]
+# Run initialization and start application
+CMD ["sh", "-c", "./init.sh && python app.py"]

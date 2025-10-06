@@ -59,3 +59,4 @@ htmlcov/
 
 # Claude
 .claude/settings.local.json
+DEPLOYMENT_CREDENTIALS.md
